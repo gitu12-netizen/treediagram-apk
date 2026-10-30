@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean Tree Diagram Builder</title>
+  <!-- Pustaka Vis.js (Gratis & Tanpa Watermark) -->
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #121212;
+      color: #e0e0e0;
+      overflow: hidden;
+    }
+    header {
+      background-color: #1e1e1e;
+      color: #ffffff;
+      padding: 12px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2d2d2d;
+    }
+    .main-container {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      position: relative;
+    }
+    #network {
+      width: 100%;
+      height: calc(100vh - 120px);
+      background-color: #181818;
+    }
+    .control-panel {
+      padding: 10px 15px;
+      background-color: #161616;
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid #282828;
+    }
+    .btn {
+      background-color: #2a2a2a;
+      color: #ffffff;
+      border: 1px solid #444;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      background-color: #3d3d3d;
+      border-color: #666;
+    }
+    .btn-primary {
+      background-color: #2563eb;
+      border-color: #3b82f6;
+    }
+    .btn-success {
+      background-color: #166534;
+      border-color: #22c55e;
+    }
+    .btn-danger {
+      background-color: #991b1b;
+      border-color: #ef4444;
+    }
+    
+    /* MODAL POP-UP */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-card {
+      background: #222222;
+      border: 1px solid #3d3d3d;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 380px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .modal-card h4 {
+      margin: 0 0 10px 0;
+      color: #fff;
+      font-size: 16px;
+    }
+    .modal-textarea {
+      width: 100%;
+      height: 120px;
+      background: #141414;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      color: #fff;
+      font-size: 12px;
+      margin-bottom: 15px;
+      resize: none;
+      outline: none;
+    }
+    .modal-input {
+      width: 100%;
+      background: #141414;
+      border: 1px solid #444;
+      border-radius: 6px;
+      padding: 10px;
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 15px;
+      outline: none;
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h3 style="margin:0; font-size: 16px; font-weight: 600;">Tree Diagram Builder</h3>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-success" onclick="openSaveModal()">Simpan</button>
+      <button class="btn" onclick="openLoadModal()">Buka</button>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <div class="control-panel">
+      <button class="btn" onclick="addNode('circle')">+ Bulat</button>
+      <button class="btn" onclick="addNode('box')">+ Kotak</button>
+      <button class="btn btn-danger" onclick="deleteSelected()">Hapus</button>
+    </div>
+
+    <div id="network"></div>
+  </div>
+
+  <!-- MODAL SIMPAN (TEXTAREA / SALIN KODE) -->
+  <div class="modal-overlay" id="saveModal">
+    <div class="modal-card">
+      <h4>Simpan Data Diagram</h4>
+      <p style="font-size: 12px; color: #aaa; margin-top:0;">Salin teks di bawah ini dan simpan ke catatan/file .json:</p>
+      <textarea id="saveDataOutput" class="modal-textarea" readonly></textarea>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Tutup</button>
+        <button class="btn btn-primary" onclick="copyToClipboard()">Salin Teks</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL BUKA (TEMPEL KODE JSON) -->
+  <div class="modal-overlay" id="loadModal">
+    <div class="modal-card">
+      <h4>Buka Data Diagram</h4>
+      <p style="font-size: 12px; color: #aaa; margin-top:0;">Tempel (paste) kode JSON diagram di bawah ini:</p>
+      <textarea id="loadDataInput" class="modal-textarea" placeholder="Tempel kode di sini..."></textarea>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Batal</button>
+        <button class="btn btn-primary" onclick="loadFromText()">Muat Diagram</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIT NODE -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal-card">
+      <h4>Edit Node Diagram</h4>
+      <input type="text" id="nodeLabelInput" class="modal-input" placeholder="Tulis teks..." autocomplete="off">
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModals()">Batal</button>
+        <button class="btn btn-primary" onclick="saveNodeEdit()">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeEditingNodeId = null;
+
+    let nodesArray = [
+      { id: 1, label: "Root", shape: "circle" },
+      { id: 2, label: "Cabang A", shape: "circle" },
+      { id: 3, label: "Proses B", shape: "box" }
+    ];
+
+    let edgesArray = [
+      { from: 1, to: 2 },
+      { from: 1, to: 3 }
+    ];
+
+    let nodes = new vis.DataSet(nodesArray);
+    let edges = new vis.DataSet(edgesArray);
+
+    const container = document.getElementById("network");
+    const data = { nodes: nodes, edges: edges };
+
+    const options = {
+      layout: {
+        hierarchical: {
+          enabled: true,
+          direction: "UD",
+          sortMethod: "directed",
+          nodeSpacing: 130,
+          levelSeparation: 100
+        }
+      },
+      nodes: {
+        color: {
+          background: "#2a2a2a",
+          border: "#555555",
+          highlight: { background: "#3d3d3d", border: "#888888" }
+        },
+        font: { color: "#ffffff", size: 14 },
+        borderWidth: 1.5,
+        shadow: true
+      },
+      edges: {
+        color: { color: "#444444", highlight: "#888888" },
+        smooth: { type: "cubicBezier", forceDirection: "vertical" },
+        width: 1.5
+      },
+      physics: false,
+      interaction: { dragNodes: true, hover: true }
+    };
+
+    const network = new vis.Network(container, data, options);
+
+    // Edit Node
+    network.on("doubleClick", function (params) {
+      if (params.nodes.length > 0) {
+        activeEditingNodeId = params.nodes[0];
+        const currentNode = nodes.get(activeEditingNodeId);
+        document.getElementById("nodeLabelInput").value = currentNode.label;
+        document.getElementById("editModal").style.display = "flex";
+        document.getElementById("nodeLabelInput").focus();
+      }
+    });
+
+    function saveNodeEdit() {
+      const newLabel = document.getElementById("nodeLabelInput").value.trim();
+      if (newLabel && activeEditingNodeId) {
+        nodes.update({ id: activeEditingNodeId, label: newLabel });
+      }
+      closeModals();
+    }
+
+    // Modal Kontrol
+    function openSaveModal() {
+      const exportData = { nodes: nodes.get(), edges: edges.get() };
+      document.getElementById("saveDataOutput").value = JSON.stringify(exportData, null, 2);
+      document.getElementById("saveModal").style.display = "flex";
+    }
+
+    function openLoadModal() {
+      document.getElementById("loadDataInput").value = "";
+      document.getElementById("loadModal").style.display = "flex";
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal-overlay").forEach(m => m.style.display = "none");
+      activeEditingNodeId = null;
+    }
+
+    function copyToClipboard() {
+      const textarea = document.getElementById("saveDataOutput");
+      textarea.select();
+      document.execCommand("copy");
+      alert("Data diagram berhasil disalin! Kamu bisa menempelkannya ke catatan atau file teks.");
+    }
+
+    function loadFromText() {
+      try {
+        const textData = document.getElementById("loadDataInput").value;
+        const importedData = JSON.parse(textData);
+        nodes.clear();
+        edges.clear();
+        nodes.add(importedData.nodes);
+        edges.add(importedData.edges);
+        closeModals();
+        alert("Diagram berhasil dimuat!");
+      } catch (err) {
+        alert("Format data JSON tidak valid!");
+      }
+    }
+
+    // Tambah Node
+    function addNode(shapeType) {
+      const selectedNodes = network.getSelectedNodes();
+      const newId = Date.now();
+      const labelText = shapeType === "circle" ? "Bulat Baru" : "Kotak Baru";
+
+      nodes.add({ id: newId, label: labelText, shape: shapeType });
+
+      if (selectedNodes.length > 0) {
+        edges.add({ from: selectedNodes[0], to: newId });
+      }
+    }
+
+    // Hapus Node
+    function deleteSelected() {
+      const selectedNodes = network.getSelectedNodes();
+      const selectedEdges = network.getSelectedEdges();
+
+      if (selectedNodes.length > 0) {
+        nodes.remove(selectedNodes);
+      } else if (selectedEdges.length > 0) {
+        edges.remove(selectedEdges);
+      }
+    }
+  </script>
+</body>
+</html>

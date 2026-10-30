@@ -132,9 +132,9 @@
     const KEY_LIST = "treeDiagram.list";
 
     const DEFAULT_NODES = [
-      { id: 1, label: "Root", shape: "circle" },
-      { id: 2, label: "Cabang A", shape: "circle" },
-      { id: 3, label: "Proses B", shape: "box" }
+      { id: 1, label: "Root", shape: "circle", x: 0, y: 0 },
+      { id: 2, label: "Cabang A", shape: "circle", x: -120, y: 130 },
+      { id: 3, label: "Proses B", shape: "box", x: 120, y: 130 }
     ];
     const DEFAULT_EDGES = [
       { from: 1, to: 2 },
@@ -152,11 +152,13 @@
 
     const network = new vis.Network(document.getElementById("network"), { nodes: nodes, edges: edges }, {
       layout: {
-        hierarchical: { enabled: true, direction: "UD", sortMethod: "directed", nodeSpacing: 130, levelSeparation: 100 }
+        hierarchical: { enabled: false }
       },
       nodes: {
         color: { background: "#2a2a2a", border: "#555555", highlight: { background: "#3d3d3d", border: "#888888" } },
-        font: { color: "#ffffff", size: 14 },
+        font: { color: "#ffffff", size: 14, multi: false },
+        widthConstraint: { maximum: 170 },
+        margin: 10,
         borderWidth: 1.5,
         shadow: true
       },
@@ -228,7 +230,7 @@
       currentListId = d.listId || null;
       nodes.clear();
       edges.clear();
-      nodes.add(d.nodes || []);
+      nodes.add((d.nodes || []).map((n, i) => (n.x === undefined ? Object.assign({}, n, { x: (i % 4) * 180 - 270, y: Math.floor(i / 4) * 130 }) : n)));
       edges.add(d.edges || []);
       refreshTitle();
       autosave();
@@ -254,6 +256,14 @@
     ["add", "update", "remove"].forEach(ev => {
       nodes.on(ev, autosave);
       edges.on(ev, autosave);
+    });
+
+    network.on("dragEnd", function (params) {
+      if (params.nodes.length === 0) return;
+      const pos = network.getPositions(params.nodes);
+      params.nodes.forEach(id => {
+        if (pos[id]) nodes.update({ id: id, x: pos[id].x, y: pos[id].y });
+      });
     });
 
     // ---------- Edit node ----------
@@ -429,7 +439,19 @@
     function addNode(shapeType) {
       const sel = network.getSelectedNodes();
       const id = newId();
-      nodes.add({ id: id, label: shapeType === "circle" ? "Bulat Baru" : "Kotak Baru", shape: shapeType });
+      let x, y;
+      if (sel.length > 0) {
+        const parentId = sel[0];
+        const p = network.getPositions([parentId])[parentId];
+        const kids = edges.get({ filter: e => e.from === parentId }).length;
+        x = p.x + kids * 180;
+        y = p.y + 130;
+      } else {
+        const v = network.getViewPosition();
+        x = v.x;
+        y = v.y;
+      }
+      nodes.add({ id: id, label: shapeType === "circle" ? "Bulat Baru" : "Kotak Baru", shape: shapeType, x: x, y: y });
       if (sel.length > 0) edges.add({ from: sel[0], to: id });
       network.fit({ animation: true });
     }

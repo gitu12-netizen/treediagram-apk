@@ -3,177 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Clean Tree Diagram Builder</title>
-  <!-- Pustaka Vis.js (Gratis & Tanpa Watermark) -->
+  <title>Tree Diagram Builder</title>
   <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      background-color: #121212;
-      color: #e0e0e0;
-      overflow: hidden;
-    }
-    header {
-      background-color: #1e1e1e;
-      color: #ffffff;
-      padding: 12px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid #2d2d2d;
-    }
-    .main-container {
-      display: flex;
-      flex-direction: column;
-      flex: 1;
-      position: relative;
-    }
-    #network {
-      width: 100%;
-      height: calc(100vh - 120px);
-      background-color: #181818;
-    }
-    .control-panel {
-      padding: 10px 15px;
-      background-color: #161616;
-      display: flex;
-      gap: 10px;
-      border-bottom: 1px solid #282828;
-    }
-    .btn {
-      background-color: #2a2a2a;
-      color: #ffffff;
-      border: 1px solid #444;
-      padding: 8px 14px;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-    .btn:hover {
-      background-color: #3d3d3d;
-      border-color: #666;
-    }
-    .btn-primary {
-      background-color: #2563eb;
-      border-color: #3b82f6;
-    }
-    .btn-success {
-      background-color: #166534;
-      border-color: #22c55e;
-    }
-    .btn-danger {
-      background-color: #991b1b;
-      border-color: #ef4444;
-    }
-    
-    /* MODAL POP-UP */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-    }
-    .modal-card {
-      background: #222222;
-      border: 1px solid #3d3d3d;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 380px;
-      padding: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    }
-    .modal-card h4 {
-      margin: 0 0 10px 0;
-      color: #fff;
-      font-size: 16px;
-    }
-    .modal-textarea {
-      width: 100%;
-      height: 120px;
-      background: #141414;
-      border: 1px solid #444;
-      border-radius: 6px;
-      padding: 10px;
-      color: #fff;
-      font-size: 12px;
-      margin-bottom: 15px;
-      resize: none;
-      outline: none;
-    }
-    .modal-input {
-      width: 100%;
-      background: #141414;
-      border: 1px solid #444;
-      border-radius: 6px;
-      padding: 10px;
-      color: #fff;
-      font-size: 14px;
-      margin-bottom: 15px;
-      outline: none;
-    }
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; background: #121212; color: #e0e0e0; overflow: hidden; }
+    header { background: #1e1e1e; color: #fff; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid #2d2d2d; }
+    .title-wrap { min-width: 0; }
+    .title-wrap h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    #diagramTitle { display: block; font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+    .head-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    #network { width: 100%; flex: 1; background: #181818; }
+    .control-panel { padding: 8px 12px; background: #161616; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #282828; flex-wrap: wrap; }
+    #status { margin-left: auto; font-size: 11px; color: #777; }
+    .btn { background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 8px 14px; cursor: pointer; border-radius: 6px; font-size: 13px; }
+    .btn:hover { background: #3d3d3d; border-color: #666; }
+    .btn-sm { padding: 6px 10px; font-size: 12px; }
+    .btn-primary { background: #2563eb; border-color: #3b82f6; }
+    .btn-success { background: #166534; border-color: #22c55e; }
+    .btn-danger { background: #991b1b; border-color: #ef4444; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.75); display: none; justify-content: center; align-items: center; z-index: 100; padding: 12px; }
+    .modal-card { background: #222; border: 1px solid #3d3d3d; border-radius: 12px; width: 100%; max-width: 380px; max-height: 88vh; overflow-y: auto; padding: 20px; }
+    .modal-card h4 { margin: 0 0 10px; color: #fff; font-size: 16px; }
+    .hint { font-size: 12px; color: #aaa; margin: 4px 0 8px; }
+    .modal-textarea { width: 100%; height: 110px; background: #141414; border: 1px solid #444; border-radius: 6px; padding: 10px; color: #fff; font-size: 12px; margin-bottom: 12px; resize: none; outline: none; }
+    .modal-input { width: 100%; background: #141414; border: 1px solid #444; border-radius: 6px; padding: 10px; color: #fff; font-size: 14px; margin-bottom: 12px; outline: none; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+    .modal-actions-col { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+    .modal-actions-col .btn { width: 100%; }
+
+    .list-box { max-height: 50vh; overflow-y: auto; }
+    .list-item { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #333; }
+    .list-info { flex: 1; min-width: 0; }
+    .list-name { font-size: 14px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .list-meta { font-size: 11px; color: #888; margin-top: 2px; }
+    .empty { color: #888; font-size: 13px; text-align: center; padding: 20px 0; line-height: 1.6; }
+
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: #333; color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 13px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 200; max-width: 90%; text-align: center; }
+    .toast.show { opacity: 1; }
   </style>
 </head>
 <body>
 
   <header>
-    <h3 style="margin:0; font-size: 16px; font-weight: 600;">Tree Diagram Builder</h3>
-    <div style="display: flex; gap: 8px;">
-      <button class="btn btn-success" onclick="openSaveModal()">Simpan</button>
-      <button class="btn" onclick="openLoadModal()">Buka</button>
+    <div class="title-wrap">
+      <h3>Tree Diagram Builder</h3>
+      <span id="diagramTitle">Diagram Baru</span>
+    </div>
+    <div class="head-btns">
+      <button class="btn btn-sm" onclick="openListModal()">Daftar</button>
+      <button class="btn btn-sm btn-success" onclick="openSaveModal()">Simpan</button>
+      <button class="btn btn-sm" onclick="openLoadModal()">Buka</button>
     </div>
   </header>
 
   <div class="main-container">
     <div class="control-panel">
-      <button class="btn" onclick="addNode('circle')">+ Bulat</button>
-      <button class="btn" onclick="addNode('box')">+ Kotak</button>
-      <button class="btn btn-danger" onclick="deleteSelected()">Hapus</button>
+      <button class="btn btn-sm" onclick="addNode('circle')">+ Bulat</button>
+      <button class="btn btn-sm" onclick="addNode('box')">+ Kotak</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteSelected()">Hapus</button>
+      <span id="status"></span>
     </div>
-
     <div id="network"></div>
   </div>
 
-  <!-- MODAL SIMPAN (TEXTAREA / SALIN KODE) -->
+  <!-- MODAL SIMPAN -->
   <div class="modal-overlay" id="saveModal">
     <div class="modal-card">
-      <h4>Simpan Data Diagram</h4>
-      <p style="font-size: 12px; color: #aaa; margin-top:0;">Salin teks di bawah ini dan simpan ke catatan/file .json:</p>
-      <textarea id="saveDataOutput" class="modal-textarea" readonly></textarea>
-      <div class="modal-actions">
+      <h4>Simpan Diagram</h4>
+      <p class="hint">Judul diagram:</p>
+      <input type="text" id="saveTitle" class="modal-input" maxlength="60" placeholder="Contoh: Struktur Tim" autocomplete="off">
+      <div class="modal-actions-col">
+        <button class="btn btn-primary" onclick="saveToList()">Simpan ke daftar aplikasi</button>
+        <button class="btn btn-success" onclick="saveToDevice()">Simpan ke HP (file)</button>
+        <button class="btn" onclick="copyText()">Salin Teks</button>
         <button class="btn" onclick="closeModals()">Tutup</button>
-        <button class="btn btn-success" onclick="saveToDevice()">Simpan ke HP</button>
-        <button class="btn btn-primary" onclick="copyToClipboard()">Salin Teks</button>
+      </div>
+      <p class="hint">Pratinjau data:</p>
+      <textarea id="saveDataOutput" class="modal-textarea" readonly></textarea>
+    </div>
+  </div>
+
+  <!-- MODAL DAFTAR -->
+  <div class="modal-overlay" id="listModal">
+    <div class="modal-card">
+      <h4>Diagram Tersimpan</h4>
+      <div class="list-box" id="listContainer"></div>
+      <div class="modal-actions-col" style="margin-top: 12px;">
+        <button class="btn" onclick="closeModals()">Tutup</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL BUKA (TEMPEL KODE JSON) -->
+  <!-- MODAL BUKA -->
   <div class="modal-overlay" id="loadModal">
     <div class="modal-card">
-      <h4>Buka Data Diagram</h4>
-      <p style="font-size: 12px; color: #aaa; margin-top:0;">Tempel (paste) kode JSON diagram di bawah ini:</p>
+      <h4>Buka Diagram</h4>
+      <div class="modal-actions-col">
+        <button class="btn btn-primary" onclick="pickFile()">Pilih file .json dari HP</button>
+      </div>
+      <p class="hint">Atau tempel kode JSON di bawah ini:</p>
       <textarea id="loadDataInput" class="modal-textarea" placeholder="Tempel kode di sini..."></textarea>
-      <div class="modal-actions">
+      <div class="modal-actions-col">
+        <button class="btn" onclick="loadFromText()">Muat dari teks</button>
         <button class="btn" onclick="closeModals()">Batal</button>
-        <button class="btn btn-primary" onclick="loadFromText()">Muat Diagram</button>
       </div>
     </div>
   </div>
@@ -190,42 +125,37 @@
     </div>
   </div>
 
-  <script>
-    let activeEditingNodeId = null;
+  <div class="toast" id="toast"></div>
 
-    let nodesArray = [
+  <script>
+    const KEY_CURRENT = "treeDiagram.current";
+    const KEY_LIST = "treeDiagram.list";
+
+    const DEFAULT_NODES = [
       { id: 1, label: "Root", shape: "circle" },
       { id: 2, label: "Cabang A", shape: "circle" },
       { id: 3, label: "Proses B", shape: "box" }
     ];
-
-    let edgesArray = [
+    const DEFAULT_EDGES = [
       { from: 1, to: 2 },
       { from: 1, to: 3 }
     ];
 
-    let nodes = new vis.DataSet(nodesArray);
-    let edges = new vis.DataSet(edgesArray);
+    const nodes = new vis.DataSet();
+    const edges = new vis.DataSet();
 
-    const container = document.getElementById("network");
-    const data = { nodes: nodes, edges: edges };
+    let currentTitle = "Diagram Baru";
+    let currentListId = null;
+    let activeEditingNodeId = null;
+    let saveTimer = null;
+    let toastTimer = null;
 
-    const options = {
+    const network = new vis.Network(document.getElementById("network"), { nodes: nodes, edges: edges }, {
       layout: {
-        hierarchical: {
-          enabled: true,
-          direction: "UD",
-          sortMethod: "directed",
-          nodeSpacing: 130,
-          levelSeparation: 100
-        }
+        hierarchical: { enabled: true, direction: "UD", sortMethod: "directed", nodeSpacing: 130, levelSeparation: 100 }
       },
       nodes: {
-        color: {
-          background: "#2a2a2a",
-          border: "#555555",
-          highlight: { background: "#3d3d3d", border: "#888888" }
-        },
+        color: { background: "#2a2a2a", border: "#555555", highlight: { background: "#3d3d3d", border: "#888888" } },
         font: { color: "#ffffff", size: 14 },
         borderWidth: 1.5,
         shadow: true
@@ -237,39 +167,27 @@
       },
       physics: false,
       interaction: { dragNodes: true, hover: true }
-    };
-
-    const network = new vis.Network(container, data, options);
-
-    // Edit Node
-    network.on("doubleClick", function (params) {
-      if (params.nodes.length > 0) {
-        activeEditingNodeId = params.nodes[0];
-        const currentNode = nodes.get(activeEditingNodeId);
-        document.getElementById("nodeLabelInput").value = currentNode.label;
-        document.getElementById("editModal").style.display = "flex";
-        document.getElementById("nodeLabelInput").focus();
-      }
     });
 
-    function saveNodeEdit() {
-      const newLabel = document.getElementById("nodeLabelInput").value.trim();
-      if (newLabel && activeEditingNodeId) {
-        nodes.update({ id: activeEditingNodeId, label: newLabel });
-      }
-      closeModals();
+    // ---------- Util ----------
+    function newId() {
+      return "n" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
     }
 
-    // Modal Kontrol
-    function openSaveModal() {
-      const exportData = { nodes: nodes.get(), edges: edges.get() };
-      document.getElementById("saveDataOutput").value = JSON.stringify(exportData, null, 2);
-      document.getElementById("saveModal").style.display = "flex";
+    function toast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
     }
 
-    function openLoadModal() {
-      document.getElementById("loadDataInput").value = "";
-      document.getElementById("loadModal").style.display = "flex";
+    function setStatus(text) {
+      document.getElementById("status").textContent = text;
+    }
+
+    function refreshTitle() {
+      document.getElementById("diagramTitle").textContent = currentTitle;
     }
 
     function closeModals() {
@@ -277,60 +195,245 @@
       activeEditingNodeId = null;
     }
 
-    function copyToClipboard() {
-      const textarea = document.getElementById("saveDataOutput");
-      textarea.select();
-      document.execCommand("copy");
-      alert("Data diagram berhasil disalin! Kamu bisa menempelkannya ke catatan atau file teks.");
+    // ---------- Autosave ----------
+    function currentState() {
+      return { title: currentTitle, listId: currentListId, nodes: nodes.get(), edges: edges.get() };
     }
 
-    function saveToDevice() {
-      const content = document.getElementById("saveDataOutput").value;
-      if (window.Android && Android.saveDiagram) {
-        Android.saveDiagram(content);
-      } else {
-        alert("Simpan ke HP hanya tersedia di aplikasi Android.");
+    function autosave() {
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          localStorage.setItem(KEY_CURRENT, JSON.stringify(currentState()));
+          setStatus("Tersimpan otomatis");
+        } catch (e) {
+          setStatus("Autosave gagal");
+        }
+      }, 300);
+    }
+
+    function applyDiagram(d) {
+      currentTitle = d.title || "Diagram Baru";
+      currentListId = d.listId || null;
+      nodes.clear();
+      edges.clear();
+      nodes.add(d.nodes || []);
+      edges.add(d.edges || []);
+      refreshTitle();
+      autosave();
+    }
+
+    function loadInitial() {
+      try {
+        const raw = localStorage.getItem(KEY_CURRENT);
+        if (raw) {
+          applyDiagram(JSON.parse(raw));
+          return;
+        }
+      } catch (e) { /* abaikan, pakai contoh */ }
+      applyDiagram({
+        title: "Diagram Baru",
+        nodes: JSON.parse(JSON.stringify(DEFAULT_NODES)),
+        edges: JSON.parse(JSON.stringify(DEFAULT_EDGES))
+      });
+    }
+
+    loadInitial();
+    ["add", "update", "remove"].forEach(ev => {
+      nodes.on(ev, autosave);
+      edges.on(ev, autosave);
+    });
+
+    // ---------- Edit node ----------
+    network.on("doubleClick", function (params) {
+      if (params.nodes.length > 0) {
+        activeEditingNodeId = params.nodes[0];
+        document.getElementById("nodeLabelInput").value = nodes.get(activeEditingNodeId).label;
+        document.getElementById("editModal").style.display = "flex";
+        document.getElementById("nodeLabelInput").focus();
+      }
+    });
+
+    function saveNodeEdit() {
+      const newLabel = document.getElementById("nodeLabelInput").value.trim();
+      if (newLabel && activeEditingNodeId !== null) {
+        nodes.update({ id: activeEditingNodeId, label: newLabel });
       }
       closeModals();
     }
 
-    function loadFromText() {
-      try {
-        const textData = document.getElementById("loadDataInput").value;
-        const importedData = JSON.parse(textData);
-        nodes.clear();
-        edges.clear();
-        nodes.add(importedData.nodes);
-        edges.add(importedData.edges);
+    // ---------- Daftar diagram (tersimpan di aplikasi) ----------
+    function readList() {
+      try { return JSON.parse(localStorage.getItem(KEY_LIST)) || []; }
+      catch (e) { return []; }
+    }
+
+    function writeList(list) {
+      localStorage.setItem(KEY_LIST, JSON.stringify(list));
+    }
+
+    function saveToList() {
+      const input = document.getElementById("saveTitle").value.trim();
+      currentTitle = input || currentTitle || "Diagram Baru";
+      const data = { nodes: nodes.get(), edges: edges.get() };
+      const list = readList();
+      const idx = currentListId ? list.findIndex(i => i.id === currentListId) : -1;
+
+      if (idx >= 0) {
+        list[idx] = { id: currentListId, title: currentTitle, updated: Date.now(), data: data };
+      } else {
+        currentListId = newId();
+        list.unshift({ id: currentListId, title: currentTitle, updated: Date.now(), data: data });
+      }
+      writeList(list);
+      refreshTitle();
+      autosave();
+      closeModals();
+      toast("Disimpan ke daftar: " + currentTitle);
+    }
+
+    function openListModal() {
+      const list = readList();
+      const box = document.getElementById("listContainer");
+      box.innerHTML = "";
+
+      if (list.length === 0) {
+        box.innerHTML = '<div class="empty">Belum ada diagram tersimpan.<br>Tekan Simpan, isi judul, lalu pilih "Simpan ke daftar aplikasi".</div>';
+      }
+
+      list.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "list-item";
+
+        const info = document.createElement("div");
+        info.className = "list-info";
+        const name = document.createElement("div");
+        name.className = "list-name";
+        name.textContent = item.title;
+        const meta = document.createElement("div");
+        meta.className = "list-meta";
+        meta.textContent = new Date(item.updated).toLocaleString("id-ID");
+        info.append(name, meta);
+
+        const openBtn = document.createElement("button");
+        openBtn.className = "btn btn-sm btn-primary";
+        openBtn.textContent = "Buka";
+        openBtn.onclick = () => openFromList(item.id);
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn btn-sm btn-danger";
+        delBtn.textContent = "Hapus";
+        delBtn.onclick = () => deleteFromList(item.id);
+
+        row.append(info, openBtn, delBtn);
+        box.appendChild(row);
+      });
+
+      document.getElementById("listModal").style.display = "flex";
+    }
+
+    function openFromList(id) {
+      const item = readList().find(i => i.id === id);
+      if (!item) { toast("Diagram tidak ditemukan"); return; }
+      applyDiagram({ title: item.title, listId: item.id, nodes: item.data.nodes, edges: item.data.edges });
+      closeModals();
+      toast("Dibuka: " + item.title);
+    }
+
+    function deleteFromList(id) {
+      const list = readList().filter(i => i.id !== id);
+      writeList(list);
+      if (currentListId === id) currentListId = null;
+      openListModal();
+      toast("Diagram dihapus dari daftar");
+    }
+
+    // ---------- Simpan ke file HP ----------
+    function openSaveModal() {
+      document.getElementById("saveTitle").value = currentTitle;
+      document.getElementById("saveDataOutput").value = JSON.stringify(
+        { title: currentTitle, nodes: nodes.get(), edges: edges.get() }, null, 2);
+      document.getElementById("saveModal").style.display = "flex";
+    }
+
+    function saveToDevice() {
+      const title = document.getElementById("saveTitle").value.trim() || currentTitle;
+      const json = JSON.stringify({ title: title, nodes: nodes.get(), edges: edges.get() }, null, 2);
+      if (window.Android && Android.saveDiagram) {
+        Android.saveDiagram(json, title);
         closeModals();
-        alert("Diagram berhasil dimuat!");
-      } catch (err) {
-        alert("Format data JSON tidak valid!");
+      } else {
+        toast("Simpan ke HP hanya tersedia di aplikasi Android");
       }
     }
 
-    // Tambah Node
+    function copyText() {
+      const ta = document.getElementById("saveDataOutput");
+      ta.select();
+      try {
+        document.execCommand("copy");
+        toast("Teks disalin");
+      } catch (e) {
+        toast("Gagal menyalin");
+      }
+    }
+
+    // ---------- Buka dari file HP / teks ----------
+    function openLoadModal() {
+      document.getElementById("loadDataInput").value = "";
+      document.getElementById("loadModal").style.display = "flex";
+    }
+
+    function pickFile() {
+      if (window.Android && Android.pickFile) {
+        Android.pickFile();
+      } else {
+        toast("Buka file hanya tersedia di aplikasi Android");
+      }
+    }
+
+    // Dipanggil dari Java setelah file dipilih
+    window.onFileLoaded = function (text) {
+      try {
+        const d = JSON.parse(text);
+        if (!Array.isArray(d.nodes) || !Array.isArray(d.edges)) throw new Error("format");
+        applyDiagram({ title: d.title || "Diagram dari file", nodes: d.nodes, edges: d.edges });
+        closeModals();
+        toast("Diagram berhasil dibuka");
+      } catch (e) {
+        toast("File tidak valid");
+      }
+    };
+
+    window.onFileError = function (msg) {
+      toast(msg);
+    };
+
+    function loadFromText() {
+      window.onFileLoaded(document.getElementById("loadDataInput").value);
+    }
+
+    // ---------- Tambah & hapus ----------
     function addNode(shapeType) {
-      const selectedNodes = network.getSelectedNodes();
-      const newId = Date.now();
-      const labelText = shapeType === "circle" ? "Bulat Baru" : "Kotak Baru";
-
-      nodes.add({ id: newId, label: labelText, shape: shapeType });
-
-      if (selectedNodes.length > 0) {
-        edges.add({ from: selectedNodes[0], to: newId });
-      }
+      const sel = network.getSelectedNodes();
+      const id = newId();
+      nodes.add({ id: id, label: shapeType === "circle" ? "Bulat Baru" : "Kotak Baru", shape: shapeType });
+      if (sel.length > 0) edges.add({ from: sel[0], to: id });
     }
 
-    // Hapus Node
     function deleteSelected() {
-      const selectedNodes = network.getSelectedNodes();
-      const selectedEdges = network.getSelectedEdges();
+      const selNodes = network.getSelectedNodes();
+      const selEdges = network.getSelectedEdges();
 
-      if (selectedNodes.length > 0) {
-        nodes.remove(selectedNodes);
-      } else if (selectedEdges.length > 0) {
-        edges.remove(selectedEdges);
+      if (selNodes.length > 0) {
+        // Hapus juga garis yang terhubung agar tidak ada garis menggantung
+        const linked = edges.get({ filter: e => selNodes.includes(e.from) || selNodes.includes(e.to) }).map(e => e.id);
+        edges.remove(linked);
+        nodes.remove(selNodes);
+      } else if (selEdges.length > 0) {
+        edges.remove(selEdges);
+      } else {
+        toast("Pilih node atau garis dulu");
       }
     }
   </script>

@@ -14,7 +14,7 @@
     #diagramTitle { display: block; font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
     .head-btns { display: flex; gap: 6px; flex-shrink: 0; }
     .main-container { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-    #network { width: 100%; flex: 1; background: #181818; }
+    #network { width: 100%; height: 300px; background: #181818; }
     .control-panel { padding: 8px 12px; background: #161616; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid #282828; flex-wrap: wrap; }
     #status { margin-left: auto; font-size: 11px; color: #777; }
     .btn { background: #2a2a2a; color: #fff; border: 1px solid #444; padding: 8px 14px; cursor: pointer; border-radius: 6px; font-size: 13px; }
@@ -169,6 +169,17 @@
       interaction: { dragNodes: true, hover: true }
     });
 
+    // ---------- Ukuran kanvas ----------
+    function resizeNetwork() {
+      const header = document.querySelector("header");
+      const panel = document.querySelector(".control-panel");
+      const h = window.innerHeight - header.offsetHeight - panel.offsetHeight;
+      document.getElementById("network").style.height = Math.max(h, 200) + "px";
+      network.redraw();
+      network.fit({ animation: false });
+    }
+    window.addEventListener("resize", resizeNetwork);
+
     // ---------- Util ----------
     function newId() {
       return "n" + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
@@ -239,6 +250,7 @@
     }
 
     loadInitial();
+    resizeNetwork();
     ["add", "update", "remove"].forEach(ev => {
       nodes.on(ev, autosave);
       edges.on(ev, autosave);
@@ -419,6 +431,7 @@
       const id = newId();
       nodes.add({ id: id, label: shapeType === "circle" ? "Bulat Baru" : "Kotak Baru", shape: shapeType });
       if (sel.length > 0) edges.add({ from: sel[0], to: id });
+      network.fit({ animation: true });
     }
 
     function deleteSelected() {

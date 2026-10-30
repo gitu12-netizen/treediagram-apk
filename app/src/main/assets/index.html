@@ -159,6 +159,7 @@
       <textarea id="saveDataOutput" class="modal-textarea" readonly></textarea>
       <div class="modal-actions">
         <button class="btn" onclick="closeModals()">Tutup</button>
+        <button class="btn btn-success" onclick="saveToDevice()">Simpan ke HP</button>
         <button class="btn btn-primary" onclick="copyToClipboard()">Salin Teks</button>
       </div>
     </div>
@@ -281,6 +282,16 @@
       textarea.select();
       document.execCommand("copy");
       alert("Data diagram berhasil disalin! Kamu bisa menempelkannya ke catatan atau file teks.");
+    }
+
+    function saveToDevice() {
+      const content = document.getElementById("saveDataOutput").value;
+      if (window.Android && Android.saveDiagram) {
+        Android.saveDiagram(content);
+      } else {
+        alert("Simpan ke HP hanya tersedia di aplikasi Android.");
+      }
+      closeModals();
     }
 
     function loadFromText() {

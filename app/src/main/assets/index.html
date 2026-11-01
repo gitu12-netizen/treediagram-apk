@@ -78,11 +78,8 @@
       <div class="modal-actions-col">
         <button class="btn btn-primary" onclick="saveToList()">Simpan ke daftar aplikasi</button>
         <button class="btn btn-success" onclick="saveToDevice()">Simpan ke HP (file)</button>
-        <button class="btn" onclick="copyText()">Salin Teks</button>
         <button class="btn" onclick="closeModals()">Tutup</button>
       </div>
-      <p class="hint">Pratinjau data:</p>
-      <textarea id="saveDataOutput" class="modal-textarea" readonly></textarea>
     </div>
   </div>
 
@@ -373,8 +370,6 @@
     // ---------- Simpan ke file HP ----------
     function openSaveModal() {
       document.getElementById("saveTitle").value = currentTitle;
-      document.getElementById("saveDataOutput").value = JSON.stringify(
-        { title: currentTitle, nodes: nodes.get(), edges: edges.get() }, null, 2);
       document.getElementById("saveModal").style.display = "flex";
     }
 
@@ -386,17 +381,6 @@
         closeModals();
       } else {
         toast("Simpan ke HP hanya tersedia di aplikasi Android");
-      }
-    }
-
-    function copyText() {
-      const ta = document.getElementById("saveDataOutput");
-      ta.select();
-      try {
-        document.execCommand("copy");
-        toast("Teks disalin");
-      } catch (e) {
-        toast("Gagal menyalin");
       }
     }
 
